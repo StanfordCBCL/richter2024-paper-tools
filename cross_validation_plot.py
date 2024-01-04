@@ -243,7 +243,7 @@ def main():
             run_calibration(project_path, centerline_file, zerod_file_i, threed_result_file, zerod_opt_file_i)
 
             with multiprocessing.Pool(10) as pool:
-                result = pool.map(multip_function, [(project_path, i, variation_config, threed_result_file, zerod_file_i, zerod_opt_file_i, centerline_file) for i in range(50)])
+                result = pool.map(multip_function, [(project_path, i,  data_config[f"s{patient}.{i}" + ".vtp"], threed_result_file, zerod_file_i, zerod_opt_file_i, centerline_file) for i in range(50)])
     
             data = {t: vardata for vardata, t in result}
 
