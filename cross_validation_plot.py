@@ -261,63 +261,63 @@ def main():
 
     headers = ["Model", "Calibrated", "Mean systolic pressure error at caps [\%]", "Mean systolic flow error at caps [\%]"]
 
-    # df = pd.DataFrame(columns=headers)
-    # idx = 0
-    # for patient in ["0104_0001", "0140_2001", "0080_0001"]:
+    df = pd.DataFrame(columns=headers)
+    idx = 0
+    for patient in ["0104_0001", "0140_2001", "0080_0001"]:
 
-    #     with open(os.path.join(target_folder, f"{patient}/variation_0" + "_data.json")) as ff:
-    #         data =json.load(ff)
+        with open(os.path.join(target_folder, f"{patient}/variation_0" + "_data.json")) as ff:
+            data =json.load(ff)
 
-    #     # validation error
-    #     pressure_3d = np.array([vardata["pressure_3d"] for key, vardata in data.items()])
-    #     flow_3d = np.array([vardata["flow_3d"] for key, vardata in data.items()])
-    #     pressure_0d = np.array([vardata["pressure_0d"] for key, vardata in data.items()])
-    #     flow_0d = np.array([vardata["flow_0d"] for key, vardata in data.items()])
+        # validation error
+        pressure_3d = np.array([vardata["pressure_3d"] for key, vardata in data.items()])
+        flow_3d = np.array([vardata["flow_3d"] for key, vardata in data.items()])
+        pressure_0d = np.array([vardata["pressure_0d"] for key, vardata in data.items()])
+        flow_0d = np.array([vardata["flow_0d"] for key, vardata in data.items()])
 
-    #     pres_error = np.mean(np.abs((pressure_0d-pressure_3d)/pressure_3d), axis=1) * 100
-    #     flow_error = np.mean(np.abs((flow_0d-flow_3d)/flow_3d), axis=1) * 100
+        pres_error = np.mean(np.abs((pressure_0d-pressure_3d)/pressure_3d), axis=1) * 100
+        flow_error = np.mean(np.abs((flow_0d-flow_3d)/flow_3d), axis=1) * 100
 
-    #     for i in range(len(pres_error)):
-    #         df.loc[idx] = [patient, "No", pres_error[i], flow_error[i]]
-    #         idx+=1
+        for i in range(len(pres_error)):
+            df.loc[idx] = [patient, "Geometric", pres_error[i], flow_error[i]]
+            idx+=1
 
-    #     for k in range(50):
+        for k in range(50):
 
-    #         tag = f"{patient}/variation_{k}"
+            tag = f"{patient}/variation_{k}"
 
-    #         with open(os.path.join(target_folder, tag + "_data.json")) as ff:
-    #             data =json.load(ff)
+            with open(os.path.join(target_folder, tag + "_data.json")) as ff:
+                data =json.load(ff)
                 
-    #         var_id = lambda x: int(x.split("_")[1])
+            var_id = lambda x: int(x.split("_")[1])
 
-    #         # validation error
-    #         pressure_3d = np.array([vardata["pressure_3d"] for key, vardata in data.items() if var_id(key) != k])
-    #         flow_3d = np.array([vardata["flow_3d"] for key, vardata in data.items() if var_id(key) != k])
-    #         pressure_0d_opt = np.array([vardata["pressure_0d_opt"] for key, vardata in data.items() if var_id(key) != k])
-    #         flow_0d_opt = np.array([vardata["flow_0d_opt"] for key, vardata in data.items() if var_id(key) != k])
+            # validation error
+            pressure_3d = np.array([vardata["pressure_3d"] for key, vardata in data.items() if var_id(key) != k])
+            flow_3d = np.array([vardata["flow_3d"] for key, vardata in data.items() if var_id(key) != k])
+            pressure_0d_opt = np.array([vardata["pressure_0d_opt"] for key, vardata in data.items() if var_id(key) != k])
+            flow_0d_opt = np.array([vardata["flow_0d_opt"] for key, vardata in data.items() if var_id(key) != k])
 
-    #         # training error
-    #         pressure_3d_train = np.array([vardata["pressure_3d"] for key, vardata in data.items() if var_id(key) == k])
-    #         flow_3d_train = np.array([vardata["flow_3d"] for key, vardata in data.items() if var_id(key) == k])
-    #         # pressure_0d_train = np.array([vardata["pressure_0d"] for key, vardata in data.items() if var_id(key) == k]).flatten()
-    #         # flow_0d_train = np.array([vardata["flow_0d"] for key, vardata in data.items() if var_id(key) == k]).flatten()
-    #         pressure_0d_opt_train = np.array([vardata["pressure_0d_opt"] for key, vardata in data.items() if var_id(key) == k])
-    #         flow_0d_opt_train = np.array([vardata["flow_0d_opt"] for key, vardata in data.items() if var_id(key) == k])
+            # training error
+            pressure_3d_train = np.array([vardata["pressure_3d"] for key, vardata in data.items() if var_id(key) == k])
+            flow_3d_train = np.array([vardata["flow_3d"] for key, vardata in data.items() if var_id(key) == k])
+            # pressure_0d_train = np.array([vardata["pressure_0d"] for key, vardata in data.items() if var_id(key) == k]).flatten()
+            # flow_0d_train = np.array([vardata["flow_0d"] for key, vardata in data.items() if var_id(key) == k]).flatten()
+            pressure_0d_opt_train = np.array([vardata["pressure_0d_opt"] for key, vardata in data.items() if var_id(key) == k])
+            flow_0d_opt_train = np.array([vardata["flow_0d_opt"] for key, vardata in data.items() if var_id(key) == k])
 
-    #         pres_error_opt = np.mean(np.abs((pressure_0d_opt-pressure_3d)/pressure_3d), axis=1) * 100
-    #         flow_error_opt = np.mean(np.abs((flow_0d_opt-flow_3d)/flow_3d), axis=1) * 100
+            pres_error_opt = np.mean(np.abs((pressure_0d_opt-pressure_3d)/pressure_3d), axis=1) * 100
+            flow_error_opt = np.mean(np.abs((flow_0d_opt-flow_3d)/flow_3d), axis=1) * 100
 
-    #         pres_error_opt_train = np.mean(np.abs((pressure_0d_opt_train-pressure_3d_train)/pressure_3d_train), axis=1) * 100
-    #         flow_error_opt_train = np.mean(np.abs((flow_0d_opt_train-flow_3d_train)/flow_3d_train), axis=1) * 100
+            pres_error_opt_train = np.mean(np.abs((pressure_0d_opt_train-pressure_3d_train)/pressure_3d_train), axis=1) * 100
+            flow_error_opt_train = np.mean(np.abs((flow_0d_opt_train-flow_3d_train)/flow_3d_train), axis=1) * 100
 
-    #         for i in range(len(pres_error_opt_train)):
-    #             df.loc[idx] = [patient, "Yes (training set)", pres_error_opt_train[i], flow_error_opt_train[i]]
-    #             idx+=1
-    #         for i in range(len(pres_error_opt)):
-    #             df.loc[idx] = [patient, "Yes (validation set)", pres_error_opt[i], flow_error_opt[i]]
-    #             idx+=1
+            for i in range(len(pres_error_opt_train)):
+                df.loc[idx] = [patient, "Calibrated (training)", pres_error_opt_train[i], flow_error_opt_train[i]]
+                idx+=1
+            for i in range(len(pres_error_opt)):
+                df.loc[idx] = [patient, "Calibrated (validation)", pres_error_opt[i], flow_error_opt[i]]
+                idx+=1
 
-    # df.to_csv(df_target)
+    df.to_csv(df_target)
 
     df = pd.read_csv(df_target)
 
@@ -339,7 +339,7 @@ def main():
     axs[0].grid(axis='y')
     axs[1].grid(axis='y')
 
-    axs[0].legend(loc='upper right', bbox_to_anchor=(1.77, -0.15), ncol=3)
+    axs[0].legend(loc='upper right', bbox_to_anchor=(1.9, -0.15), ncol=3)
     axs[1].get_legend().remove()
 
     fig.subplots_adjust(bottom=0.19, left=0.1, right=0.95, top=0.9)
