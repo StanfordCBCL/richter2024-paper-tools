@@ -5,25 +5,13 @@ from rich import print
 from svsuperestimator import reader
 from svsuperestimator.tasks import taskutils
 
-threed_results_folder = "/Volumes/richter/72_centerline_results_martin"
+threed_results_folder = "/Volumes/richter/final_data/centerline_results"
 
-# threed_results_folder2 = "/Volumes/richter/additional_centerline_results"
+zerod_input_folder = "/Volumes/richter/final_data/input_0d"
 
-zerod_input_folder = "/Volumes/richter/solver_input_0d"
+model_names = ["0104_0001", "0140_2001", "0080_0001"]
 
-
-# model_names = [
-#     "0003_0001",
-#     "0097_0001",
-#     "0107_0001",
-#     "0111_0001",
-#     "0130_0000", # Kein Centerline result
-#     "0156_0001",
-# ]
-
-model_names = ["0104_0001", "0140_2001"]
-
-target_folder = "/Volumes/richter/cfc2023"
+target_folder = "/Volumes/richter/final_data/multi_fidelity_calibration/input"
 
 
 for model_name in model_names:
@@ -76,16 +64,20 @@ for model_name in model_names:
         ]
     ).tolist()
 
-    config = f"""project: /scratch/users/richter7/data/projects72_new/{model_name}
+    config = f"""project: /scratch/users/richter7/data/projects/{model_name}
 global:
     num_procs: 48
 slurm:
     partition: amarsden
     python-path: ~/miniconda3/envs/estimator/bin/python
+file_registry:
+    centerline: /scratch/users/richter7/data/centerlines/{model_name}.vtp
+    centerline_path: /scratch/users/richter7/data/centerlines/{model_name}.vtp
+    0d_simulation_input_path: /scratch/users/richter7/data/input_0d/{model_name}_0d.in
+    0d_simulation_input: /scratch/users/richter7/data/input_0d/{model_name}_0d.in
 tasks:
     multi_fidelity_tuning:
-        name: multi_fidelity_lm_calibration2
-        num_iter: 10
+        name: multi_fidelity_january2024
         theta_obs: {theta_obs}
         y_obs: {y_obs}
         smc_num_particles: 10000
@@ -97,7 +89,6 @@ tasks:
         svsolver_executable: /home/users/richter7/svsolver/build/svSolver-build/bin/svsolver
         svpost_executable: /home/users/richter7/svsolver/build/svSolver-build/bin/svpost
         svslicer_executable: /home/users/richter7/svSlicer/Release/svslicer
-        svzerodcalibrator_executable: /home/users/richter7/svZeroDPlus/Release/svzerodcalibrator
     """
 
     with open(os.path.join(target_folder, f"{model_name}_estimator.yaml"), "w") as ff:

@@ -259,7 +259,7 @@ lines.markersize:      2           # marker size, in points
 ## relative to font.size, using the following values: xx-small, x-small,
 ## small, medium, large, x-large, xx-large, larger, or smaller
 
-#font.family:  sans-serif
+font.family:  serif
 #font.style:   normal
 #font.variant: normal
 #font.weight:  normal
@@ -267,7 +267,7 @@ lines.markersize:      2           # marker size, in points
 #font.size:    10.0
 
 #font.serif:      DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
-font.sans-serif: Arial
+#font.sans-serif: Times
 #font.cursive:    Apple Chancery, Textile, Zapf Chancery, Sand, Script MT, Felipa, Comic Neue, Comic Sans MS, cursive
 #font.fantasy:    Chicago, Charcoal, Impact, Western, xkcd script, fantasy
 #font.monospace:  DejaVu Sans Mono, Bitstream Vera Sans Mono, Computer Modern Typewriter, Andale Mono, Nimbus Mono L, Courier New, Courier, Fixed, Terminal, monospace
@@ -369,13 +369,13 @@ axes.linewidth:     0.5     # edge line width
 #axes.grid.axis:     both    # which axis the grid should apply to
 #axes.grid.which:    major   # grid lines at {major, minor, both} ticks
 #axes.titlelocation: center  # alignment of the title: {left, right, center}
-axes.titlesize:     12   # font size of the axes title
+axes.titlesize:     9   # font size of the axes title
 #axes.titleweight:   normal  # font weight of title
 #axes.titlecolor:    auto    # color of the axes title, auto falls back to
                              # text.color as default value
 #axes.titley:        None    # position title (axes relative units).  None implies auto
-#axes.titlepad:      6.0     # pad between axes and title in points
-axes.labelsize:     10  # font size of the x and y labels
+axes.titlepad:      2     # pad between axes and title in points
+axes.labelsize:     9  # font size of the x and y labels
 #axes.labelpad:      4.0     # space between label and axis
 #axes.labelweight:   normal  # weight of the x and y labels
 #axes.labelcolor:    black
@@ -538,9 +538,9 @@ legend.fancybox:      False     # if True, use a rounded box for the
 #legend.numpoints:     1        # the number of marker points in the legend line
 #legend.scatterpoints: 1        # number of scatter points
 #legend.markerscale:   1.0      # the relative size of legend markers vs. original
-legend.fontsize:      8
+legend.fontsize:      6
 #legend.labelcolor:    None
-legend.title_fontsize: 8    # None sets to the same as the default axes.
+legend.title_fontsize: 6    # None sets to the same as the default axes.
 
 ## Dimensions as fraction of font size:
 #legend.borderpad:     0.4  # border whitespace
