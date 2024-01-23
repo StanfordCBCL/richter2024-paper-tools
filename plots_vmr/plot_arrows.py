@@ -53,7 +53,7 @@ def print_error():
                 xtick = np.arange(len(values[0, 0]))
 
                 plot_bar_arrow(
-                    fig1, ax1, xtick, values, geos, m0, m1, f, d, "png", "aplhabetical"
+                    fig1, ax1, xtick, values, geos, m0, m1, f, d, "../png", "aplhabetical"
                 )
 
 
