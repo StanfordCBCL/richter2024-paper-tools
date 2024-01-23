@@ -15,12 +15,13 @@ plt.rcParams.update(
     {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
 )
 
+from utils import f_error_0d3d_geo, f_error_0d3d_cali
 
 def print_error():
     # load post-processed error analysis
-    with open("0d_3d_comparison_geometric_pfaller22.json", "r") as f:
+    with open(f_error_0d3d_geo, "r") as f:
         geometric = json.load(f)
-    with open("0d_3d_comparison_calibrated_richter24.json", "r") as f:
+    with open(f_error_0d3d_cali, "r") as f:
         calibrated = json.load(f)
     err = {"geometric": geometric, "calibrated": calibrated}
     geos = sorted(geometric.keys())
@@ -53,12 +54,11 @@ def print_error():
                 xtick = np.arange(len(values[0, 0]))
 
                 plot_bar_arrow(
-                    fig1, ax1, xtick, values, geos, m0, m1, f, d, "../png", "aplhabetical"
+                    fig1, ax1, xtick, values, geos, m0, m1, f, d, "png", "aplhabetical"
                 )
 
 
 def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name):
-    m_rom = "0D"
     # unit conversion
     fields = ["pressure", "flow"]
     units = {"pressure": "mmHg", "flow": "l/min", "area": "mm$^2$"}

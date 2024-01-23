@@ -8,9 +8,6 @@ import matplotlib.pyplot as plt
 
 from utils import f_geometries, f_geo_in, f_cali_0d_out, f_cali_3d_out
 
-# Number of observations to extract in result refinement
-NUM_OBS = 100
-
 # use LaTeX in text
 plt.rcParams.update(
     {
@@ -44,8 +41,8 @@ def plot(dim):
     for j, fname in enumerate(files):
         print(fname)
         ab = np.unravel_index(j, (nx, ny))
+
         # read results
-        end = "_from_" + str(dim) + "d.json"
         with open(os.path.join(f_geo_in, fname + ".json")) as f:
             inp = json.load(f)
         with open(os.path.join(f_cali_out, fname + ".json")) as f:
