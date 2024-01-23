@@ -10,7 +10,7 @@ from scipy.interpolate import CubicSpline
 # svZeroDSolver from https://github.com/SimVascular/svZeroDSolver
 import pysvzerod
 
-from utils import f_geometries, f_geo_in, f_cali_in, f_cali_out
+from utils import f_geometries, f_geo_in, f_cali_in, f_cali_0d_out
 
 # Number of observations to extract in result refinement
 NUM_OBS = 100
@@ -154,7 +154,7 @@ def estimate(geo):
         return
 
     # write calibrated json
-    fname_out = os.path.join(f_cali_out, geo + ".json")
+    fname_out = os.path.join(f_cali_0d_out, geo + ".json")
     with open(fname_out, "w") as f:
         json.dump(cali, f, indent=4)
 

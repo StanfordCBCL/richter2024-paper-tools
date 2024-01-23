@@ -6,7 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import f_geometries, f_geo_in, f_cali_out
+from utils import f_geometries, f_geo_in, f_cali_0d_out, f_cali_3d_out
 
 # Number of observations to extract in result refinement
 NUM_OBS = 100
@@ -24,6 +24,12 @@ plt.rcParams.update(
 
 def plot(dim):
     print("\nComparing 0D-" + str(dim) + "D\n")
+    if dim == 0:
+        f_cali_out = f_cali_0d_out
+    elif dim == 3:
+        f_cali_out = f_cali_3d_out
+    else:
+        raise ValueError("Unknown dimension " + str(dim))
 
     files = np.loadtxt(f_geometries, dtype="str")
     assert len(files) == 72, "wrong number of files"
