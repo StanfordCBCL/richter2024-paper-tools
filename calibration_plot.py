@@ -93,7 +93,7 @@ def plot(dim):
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
     fig.text(-0.01, 0.5, ytext, va="center", fontsize=24, rotation="vertical")
     plt.tight_layout()
-    fout = os.path.join("..", "png", "calibration_" + str(dim) + "d.png")
+    fout = os.path.join("png", "calibration_" + str(dim) + "d.png")
     fig.savefig(fout, bbox_inches="tight")
 
 
