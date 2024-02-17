@@ -6,16 +6,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import f_out, f_geometries, f_geo_in, f_cali_0d_out, f_cali_3d_out
+from utils import f_out, f_geo_in, f_cali_0d_out, f_cali_3d_out, model_colors, get_geometries
 
 # use LaTeX in text
 plt.rcParams.update(
-    {
-        "text.usetex": True,
-        "font.family": "sans-serif",
-        "font.sans-serif": "Arial",
-        "font.size": 12,
-    }
+    {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
 )
 
 
@@ -28,8 +23,8 @@ def plot(dim):
     else:
         raise ValueError("Unknown dimension " + str(dim))
 
-    files = np.loadtxt(f_geometries, dtype="str")
-    assert len(files) == 72, "wrong number of files"
+    # get geometries and colors
+    files, cats = get_geometries()
 
     # compare 0D element values
     nx = 9
@@ -38,7 +33,7 @@ def plot(dim):
     elements = ["R_poiseuille", "C", "L", "stenosis_coefficient"]
 
     fig, ax = plt.subplots(nx, ny, figsize=(ny * 2, nx * 2), dpi=300)
-    for j, fname in enumerate(files):
+    for j, (fname, cat) in enumerate(zip(files, cats)):
         print(fname)
         ab = np.unravel_index(j, (nx, ny))
 
@@ -65,13 +60,15 @@ def plot(dim):
         if not ref:
             print("no values found")
             continue
-        ax[ab].set_title(fname)
+        ax[ab].set_title(fname, color=model_colors[cat], fontweight="bold", fontsize=12)
         # ax[ab].grid(True)
         ax[ab].scatter(ref, sol, s=20, c=col)
         ax[ab].set_yscale("log")
         ax[ab].set_xscale("log")
         ax[ab].set_xticklabels([])
         ax[ab].set_yticklabels([])
+        ax[ab].spines["top"].set_visible(True)
+        ax[ab].spines["right"].set_visible(True)
 
         # manually set limits
         eps = 10
