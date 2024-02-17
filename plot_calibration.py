@@ -6,7 +6,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import f_geometries, f_geo_in, f_cali_0d_out, f_cali_3d_out
+from utils import f_out, f_geometries, f_geo_in, f_cali_0d_out, f_cali_3d_out
 
 # use LaTeX in text
 plt.rcParams.update(
@@ -90,7 +90,7 @@ def plot(dim):
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
     fig.text(-0.01, 0.5, ytext, va="center", fontsize=24, rotation="vertical")
     plt.tight_layout()
-    fout = os.path.join("png", "calibration_" + str(dim) + "d.png")
+    fout = os.path.join(f_out, "calibration_" + str(dim) + "d.png")
     fig.savefig(fout, bbox_inches="tight")
 
 
