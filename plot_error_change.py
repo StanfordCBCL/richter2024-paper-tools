@@ -10,6 +10,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import matplotlib.path as mpath
+from matplotlib.patches import FancyArrowPatch
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 plt.rcParams.update(
@@ -74,12 +76,22 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
     cgs2mmhg = 7.50062e-4
     mlps2lpmin = 60.0 / 1000.0
     convert = {"pressure": cgs2mmhg, "flow": mlps2lpmin, "area": 100}
+    names = {
+        "avg": "average",
+        "max": "maximum",
+        "rel": "relative",
+        "abs": "absolute",
+        "cap": "caps",
+        "int": "interior",
+    }
 
     plt.cla()
     xlim = [-1, len(labels)]
 
     for j, (f, ax) in enumerate(zip(fields, axes)):
         ax.cla()
+        ax.spines["top"].set_visible(True)
+        ax.spines["right"].set_visible(True)
 
         if m1 == "rel":
             ax.set_yscale("log")
@@ -97,13 +109,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         data = zip(values[f]["geometric"], values[f]["calibrated"], cats)
         for i, (val0, val1, cat) in enumerate(data):
             if val0 > val1:
-                col = "k"
-                m = r"$\downarrow$"
+                m = "v"
             else:
-                col = "k"
-                m = r"$\uparrow$"
-            ax.plot([i], [val1], color=col, marker=m, markersize=8)
-            ax.plot([i, i], [val0, val1], color=model_colors[cat])
+                m = "^"
+            ax.plot([i], [val1], color=model_colors[cat], marker=m, markersize=4)
+            ax.plot([i, i], [val0, val1], color=model_colors[cat], linewidth=2)
 
         ax.set_xlim(xlim)
         ax.xaxis.grid("both")
@@ -113,7 +123,9 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
             ylabel += " [" + units[f] + "]"
         ax.set_ylabel(ylabel)
         if j == 0:
-            ax.set_title(m0 + " " + m1 + " error at " + d)
+            ax.set_title(
+                names[m0].capitalize() + " " + names[m1] + " error at " + names[d]
+            )
             ax.tick_params(
                 axis="x", which="both", bottom=False, top=False, labelbottom=False
             )
@@ -125,7 +137,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
     ratio = means["geometric"] / means["calibrated"]
-    print(fname, "error reduction", ratio)
+    print(fname)
+    for f in fields:
+        ratio = values[f]["geometric"] / values[f]["calibrated"]
+        print("error reduction ", f, np.mean(ratio))
+    plt.tight_layout(rect=(0, 0, 0.8, 1))
     fig1.savefig(fname, bbox_inches="tight")
 
 
