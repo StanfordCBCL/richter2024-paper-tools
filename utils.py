@@ -8,6 +8,9 @@ FDIR = os.path.dirname(__file__)
 # list of geometries used in pfaller22 and richter24
 f_geometries = os.path.join(FDIR, "geometries_vmr_pfaller22.txt")
 
+# database for geometries
+f_database = os.path.join(FDIR, "data", "vmr_models.json")
+
 # geometric 0d models and simulation results
 f_geo_in = os.path.join(FDIR, "data", "geometric_pfaller22", "input")
 f_geo_out = os.path.join(FDIR, "data", "geometric_pfaller22", "output")

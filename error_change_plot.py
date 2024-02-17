@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import pdb
 import os
 import json
 
@@ -15,7 +16,8 @@ plt.rcParams.update(
     {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
 )
 
-from utils import f_error_0d3d_geo, f_error_0d3d_cali
+from utils import f_error_0d3d_geo, f_error_0d3d_cali, f_database
+
 
 def print_error():
     # load post-processed error analysis
@@ -66,6 +68,20 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name
     mlps2lpmin = 60.0 / 1000.0
     convert = {"pressure": cgs2mmhg, "flow": mlps2lpmin, "area": 100}
 
+    # load model database
+    with open(f_database, "r") as file:
+        db = json.load(file)
+
+    # set model colors
+    colors = {
+        "Coronary": "r",
+        "Aortofemoral": "b",
+        "Aorta": "k",
+        "Animal and Misc": "y",
+        "Pulmonary": "c",
+        "Congenital Heart Disease": "orange",
+    }
+
     plt.cla()
     xlim = [-1, len(labels)]
 
@@ -85,6 +101,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name
         ax.plot(xlim, [avg[1]] * 2, color=col)
 
         for i, (geo, val) in enumerate(zip(labels, values_plot[j].T)):
+            cat = db[geo]["params"]["deliverable_category"]
             if val[0] > val[1]:
                 col = "g"
                 m = r"$\downarrow$"
@@ -92,7 +109,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name
                 col = "r"
                 m = r"$\uparrow$"
             ax.plot([i], [val[1]], color=col, marker=m, markersize=8)
-            ax.plot([i, i], [val[0], val[1]], color="k")
+            ax.plot([i, i], [val[0], val[1]], color=colors[cat])
 
         ax.set_xlim(xlim)
         ax.xaxis.grid("both")
