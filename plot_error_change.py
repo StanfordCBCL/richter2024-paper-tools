@@ -16,17 +16,31 @@ plt.rcParams.update(
     {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
 )
 
-from utils import f_error_0d3d_geo, f_error_0d3d_cali, f_database
+from utils import (
+    f_out,
+    f_e_0d3d_geo,
+    f_e_0d3d_cali,
+    model_colors,
+    get_geometries,
+)
 
 
-def print_error():
+def print_error(sorting):
     # load post-processed error analysis
-    with open(f_error_0d3d_geo, "r") as f:
+    with open(f_e_0d3d_geo, "r") as f:
         geometric = json.load(f)
-    with open(f_error_0d3d_cali, "r") as f:
+    with open(f_e_0d3d_cali, "r") as f:
         calibrated = json.load(f)
     err = {"geometric": geometric, "calibrated": calibrated}
-    geos = sorted(geometric.keys())
+
+    # load model database
+    geos, cats = get_geometries()
+    if sorting == "alphabetical":
+        order = np.argsort(geos)
+        geos = geos[order]
+        cats = cats[order]
+
+    xtick = np.arange(len(geos))
 
     # select errors to plot
     fields = ["pressure", "flow"]
@@ -39,28 +53,21 @@ def print_error():
     for d in domain:
         for m0 in metric0:
             for m1 in metric1:
-                values = []
+                values = {}
                 for f in fields:
-                    values_s = []
-                    for s, res in err.items():
-                        values_f = []
+                    values[f] = {}
+                    for s in ["geometric", "calibrated"]:
+                        values[f][s] = []
                         for k in geos:
-                            if k in res:
-                                values_f += [res[k][f][d][m0][m1]["all"]]
-                            else:
-                                values_f += [np.nan]
-                        values_s += [values_f]
-                    values += [values_s]
-
-                values = np.array(values)
-                xtick = np.arange(len(values[0, 0]))
+                            values[f][s] += [err[s][k][f][d][m0][m1]["all"]]
+                        values[f][s] = np.array(values[f][s])
 
                 plot_bar_arrow(
-                    fig1, ax1, xtick, values, geos, m0, m1, f, d, "png", "aplhabetical"
+                    fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out, sorting
                 )
 
 
-def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name):
+def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder, name):
     # unit conversion
     fields = ["pressure", "flow"]
     units = {"pressure": "mmHg", "flow": "l/min", "area": "mm$^2$"}
@@ -68,53 +75,43 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name
     mlps2lpmin = 60.0 / 1000.0
     convert = {"pressure": cgs2mmhg, "flow": mlps2lpmin, "area": 100}
 
-    # load model database
-    with open(f_database, "r") as file:
-        db = json.load(file)
-
-    # set model colors
-    colors = {
-        "Coronary": "r",
-        "Aortofemoral": "b",
-        "Aorta": "k",
-        "Animal and Misc": "y",
-        "Pulmonary": "c",
-        "Congenital Heart Disease": "orange",
-    }
-
     plt.cla()
     xlim = [-1, len(labels)]
 
-    for j, ax in enumerate(axes):
+    for j, (f, ax) in enumerate(zip(fields, axes)):
         ax.cla()
 
         if m1 == "rel":
             ax.set_yscale("log")
             ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=1))
-            values_plot = values
-        elif m1 == "abs":
-            values_plot = values * convert[f]
 
-        col = "0.5"
-        avg = np.mean(values_plot[j], axis=1)
-        ax.plot(xlim, [avg[0]] * 2, color=col)
-        ax.plot(xlim, [avg[1]] * 2, color=col)
+        # plot average
+        means = {}
+        for k in values[f].keys():
+            if m1 == "abs":
+                values[f][k] *= convert[f]
+            means[k] = np.mean(values[f][k])
+            ax.plot(xlim, [means[k]] * 2, color="0.5")
 
-        for i, (geo, val) in enumerate(zip(labels, values_plot[j].T)):
-            cat = db[geo]["params"]["deliverable_category"]
-            if val[0] > val[1]:
-                col = "g"
+        # plot geometries
+        data = zip(values[f]["geometric"], values[f]["calibrated"], cats)
+        for i, (val0, val1, cat) in enumerate(data):
+            if val0 > val1:
+                col = "k"
                 m = r"$\downarrow$"
             else:
-                col = "r"
+                col = "k"
                 m = r"$\uparrow$"
-            ax.plot([i], [val[1]], color=col, marker=m, markersize=8)
-            ax.plot([i, i], [val[0], val[1]], color=colors[cat])
+            ax.plot([i], [val1], color=col, marker=m, markersize=8)
+            ax.plot([i, i], [val0, val1], color=model_colors[cat])
 
         ax.set_xlim(xlim)
         ax.xaxis.grid("both")
         ax.yaxis.grid("both")
-        ax.set_ylabel(fields[j].capitalize())
+        ylabel = f.capitalize()
+        if m1 == "abs":
+            ylabel += " [" + units[f] + "]"
+        ax.set_ylabel(ylabel)
         if j == 0:
             ax.set_title(m0 + " " + m1 + " error at " + d)
             ax.tick_params(
@@ -127,9 +124,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, m0, m1, f, d, folder, name
     fname = os.path.join(
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
-    print("error reduction", fname, avg[0] / avg[1])
+    ratio = means["geometric"] / means["calibrated"]
+    print(fname, "error reduction", ratio)
     fig1.savefig(fname, bbox_inches="tight")
 
 
 if __name__ == "__main__":
-    print_error()
+    for sorting in ["alphabetical", "categories"]:
+        print_error(sorting)
