@@ -1,135 +1,68 @@
-import json
+#!/usr/bin/env python
+# coding=utf-8
+
 import os
-
-import matplotlib
-import matplotlib.pyplot as plt
+import json
 import numpy as np
-import pandas as pd
-from rich import box, print
-from rich.table import Table
-from scipy.stats import pearsonr
-from svsuperestimator.reader import *
-from svsuperestimator.reader import utils as readutils
-from svsuperestimator.tasks import taskutils
-from typing import Sequence
-import plotly.express as px
+from collections import defaultdict
 
-# from svzerodsolver import runnercpp
+FDIR = os.path.dirname(__file__)
 
+# output path for all png's
+f_out = os.path.join(FDIR, "png")
 
-def map_3d_boundary_conditions_to_0d(
-    project, handler_rcr, handler3d, handlermesh, handler_inflow
-):
-    face_ids = handlermesh.boundary_centers
+# list of geometries used in pfaller22 and richter24
+f_geometries = os.path.join(FDIR, "geometries_vmr_pfaller22.txt")
 
-    mapped_data = readutils.get_0d_element_coordinates(project)
+# database for geometries
+f_database = os.path.join(FDIR, "data", "vmr_models.json")
 
-    bc_ids = list(face_ids.keys())
-    bc_ids_coords = list(face_ids.values())
+# model pictures
+f_picture = os.path.join(FDIR, "data", "pictures")
 
-    bc_mapping = {}
-    for bc_name, bc_coord in mapped_data.items():
-        if not bc_name.startswith("branch"):
-            index = np.argmin(np.linalg.norm(bc_ids_coords - bc_coord, axis=1))
-            bc_mapping[bc_name] = bc_ids[index]
+# geometric 0d models and simulation results
+f_geo_in = os.path.join(FDIR, "data", "geometric_pfaller22", "input")
+f_geo_out = os.path.join(FDIR, "data", "geometric_pfaller22", "output")
 
-    threed_bc = handler_rcr.get_rcr_data()
-    try:
-        surface_ids = handler3d.rcr_surface_ids
-    except AttributeError:
-        surface_ids = handler3d.r_surface_ids
-    for i, bc in enumerate(threed_bc):
-        surface_id = surface_ids[i]
+# calibrated 0d models from 0d data and 3d data
+f_cali_0d_in = os.path.join(FDIR, "data", "calibrated_richter24_from_0d", "input")
+f_cali_0d_out = os.path.join(FDIR, "data", "calibrated_richter24_from_0d", "output")
+f_cali_3d_in = os.path.join(FDIR, "data", "calibrated_richter24_from_0d", "input")
+f_cali_3d_out = os.path.join(FDIR, "data", "calibrated_richter24_from_3d", "output")
 
-        for bc_name, bc_id in bc_mapping.items():
-            if bc_id == surface_id:
-                bc_mapping[bc_name] = bc
-    bc_mapping["INFLOW"] = handler_inflow.get_inflow_data()
-    return bc_mapping
+# centerlines and outlet names
+f_centerline = os.path.join(FDIR, "data", "centerlines_pfaller22")
 
+# 0d-3d comparison error metrics
+f_e_0d3d_geo = os.path.join(FDIR, "data", "0d_3d_comparison_geometric_pfaller22.json")
+f_e_0d3d_cali = os.path.join(FDIR, "data", "0d_3d_comparison_calibrated_richter24.json")
 
-def update_zero_d_boundary_conditions(zerod_handler, new_params):
-    for bc_name, bc_config in zerod_handler.boundary_conditions.items():
-        # print(bc_config["bc_values"])
+# set model colors
+model_colors = {
+    "Coronary": "brown",
+    "Aortofemoral": "darkviolet",
+    "Aorta": "darkgreen",
+    "Animal and Misc": "crimson",
+    "Pulmonary": "navy",
+    "Congenital Heart Disease": "orange",
+}
 
-        for param_name in bc_config["bc_values"].keys():
-            if param_name in new_params[bc_name]:
-                if (
-                    isinstance(new_params[bc_name][param_name], Sequence)
-                    and (len(new_params[bc_name][param_name]) == 2)
-                    and (
-                        new_params[bc_name][param_name][0]
-                        == new_params[bc_name][param_name][1]
-                    )
-                ):
-                    bc_config["bc_values"][param_name] = new_params[bc_name][
-                        param_name
-                    ][0]
-                else:
-                    bc_config["bc_values"][param_name] = new_params[bc_name][param_name]
-            else:
-                bc_config["bc_values"]["R"] = new_params[bc_name]["Rd"]
-        
-    #     print(bc_config["bc_values"])
-    #     print("\n\n")
-    # raise SystemExit
+def get_geometries():
+    # get geometries
+    geos = np.loadtxt(f_geometries, dtype="str")
 
-
-
-
-def get_systolic_pressure_and_flow_at_caps_0d(zerod_handler, result_0d):
-    bc_map = zerod_handler.vessel_to_bc_map
-
-    pressures = []
-    flows = []
-
-    for config in bc_map.values():
-        vessel_name = config["name"]
-
-        branch_id, seg_id = vessel_name.split("_")
-        branch_id, seg_id = int(branch_id[6:]), int(seg_id[3:])
-
-        pressure_id = config["pressure"]
-        flow_id = config["flow"]
-
-        vessel_result_0d = result_0d[result_0d.name == vessel_name]
-
-        # if vessel_name == "branch0_seg0":
-
-        #     px.line(vessel_result_0d[pressure_id]).show()
-        #     px.line(vessel_result_0d[flow_id]).show()
-
-        # Collect 0d results
-        pressures.append(np.amax(vessel_result_0d[pressure_id]))
-        flows.append(np.amax(vessel_result_0d[flow_id]))
-
-    return pressures, flows
-
-
-def get_systolic_pressure_and_flow_at_caps_3d(zerod_handler, branch_data):
-    bc_map = zerod_handler.vessel_to_bc_map
-
-    pressures = []
-    flows = []
-
-    for config in bc_map.values():
-        vessel_name = config["name"]
-
-        branch_id, seg_id = vessel_name.split("_")
-        branch_id, seg_id = int(branch_id[6:]), int(seg_id[3:])
-
-        segment = branch_data[branch_id][seg_id]
-
-        pressure_id = config["pressure"]
-        flow_id = config["flow"]
-
-        # if vessel_name == "branch0_seg0":
-
-        #     px.line(segment[pressure_id]).show()
-        #     px.line(segment[flow_id]).show()
-
-        # Collect 3d results
-        pressures.append(np.amax(segment[pressure_id]))
-        flows.append(np.amax(segment[flow_id]))
-
-    return pressures, flows
+    # load model database
+    with open(f_database, "r") as file:
+        db = json.load(file)
+    
+    categories = defaultdict(list)
+    for g in geos:
+        categories[db[g]["params"]["deliverable_category"]] += [g]
+    
+    order = ["Animal and Misc", "Aorta", "Aortofemoral", "Coronary", "Congenital Heart Disease", "Pulmonary"]
+    geos_sorted = []
+    cats_sorted = []
+    for o in order:
+        geos_sorted += categories[o]
+        cats_sorted += [o] * len(categories[o])
+    return np.array(geos_sorted), np.array(cats_sorted)
