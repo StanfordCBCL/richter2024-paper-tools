@@ -25,14 +25,16 @@ target_folder = "/Volumes/richter/final_data/posterior_plots"
 os.makedirs(target_folder, exist_ok=True)
 
 
-for model_name in ["0104_0001"]:
+for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january2024_0104_0001", "multi_fidelity_february_2024_more_noise", "multi_fidelity_february2024_even_more_noise"]):
+
+    model_name = "0104_0001"
 
     # project = SimVascularProject(f"/Volumes/richter/final_data/projects/{model_name}")
     zerod_handler = SvZeroDSolverInputHandler.from_file(f"/Volumes/richter/final_data/input_0d/{model_name}_0d.in")
 
     metrics_all = {}
 
-    windkessel_tunings = [f"/Volumes/richter/final_data/posterior_plots/multi_fidelity_january2024_{model_name}/5_windkessel_tuning"]
+    windkessel_tunings = [f"/Volumes/richter/final_data/posterior_plots/{tuning_name}/5_windkessel_tuning"]
 
     # for wk_tuning in windkessel_tunings:
 
@@ -45,17 +47,15 @@ for model_name in ["0104_0001"]:
     gt = np.array(data["metrics"]["ground_truth"])
     # map = np.array(data["metrics"]["maximum_a_posteriori"])
 
-    particles = np.array(taskdata["particles"][-1])
     weights = np.array(taskdata["weights"][-1]).flatten()
+    particles = np.array(taskdata["particles"][-1])
+    
+    # ---- sort by weight and select top n_top particles ----
+    n_top = 5000
+    weight_sort = np.argsort(weights)[::-1][:n_top]
 
-    # print(particles.shape)
-    # print(weights.shape)
-    # raise SystemExit
-
-    # print(np.sum(weights))
-
-    # print(np.concatenate([particles, weights.reshape(-1, 1)], axis=1).shape)
-    # print(particles.shape)
+    weights = weights[weight_sort]
+    particles = particles[weight_sort]
 
     mean = np.average(particles, weights=weights, axis=0)
     covmat = np.cov(particles.T, aweights=weights)
@@ -65,8 +65,6 @@ for model_name in ["0104_0001"]:
 
     labels = [r"$\theta^{" + f"({i+1})" + "}$" for i in range(len(outlet_bcs))]
 
-    max_row = int(len(outlet_bcs) / 3) if len(outlet_bcs) % 3 == 0 else int(len(outlet_bcs) / 3) + 1
-
     data = pd.DataFrame(columns = labels, data=particles)
     # print(data)
     # raise SystemExit
@@ -75,10 +73,19 @@ for model_name in ["0104_0001"]:
 
     cmap = matplotlib.colormaps[colormap_name]
 
-    g = sns.PairGrid(data) 
-    g.map_upper(sns.scatterplot, hue=weights, palette=colormap_name, linewidth=0)
-    g.map_lower(sns.kdeplot, weights=weights, cmap=colormap_name, fill=True)
-    g.map_diag(sns.histplot, legend=False, bins=50, weights=weights, color=cmap(1.0), linewidth=0)
+    g = sns.PairGrid(data)
+    g.figure.set_size_inches(width*2/3,width*2/3)
+    # plt.title(r"$f_{\sigma}=" + f"{int(noise_level*100)}$")
+    g.map_upper(sns.scatterplot, hue=weights, linewidth=0)
+    g.map_lower(sns.kdeplot, weights=weights, fill=True)
+    g.map_diag(sns.kdeplot, weights=weights, fill=True, linewidth=1)
+
+    # ---- Adjusting Axis Ranges ----
+    global_xmin = 7
+    global_xmax = 13
+    global_ymin = 7
+    global_ymax = 13
+    g.set(xlim=(global_xmin, global_xmax), ylim=(global_ymin, global_ymax))
 
     # x_min = np.amin(particles)
     # x_max = np.amax(particles)
@@ -93,4 +100,4 @@ for model_name in ["0104_0001"]:
     #         g.axes[i, j].set_xlim((x_min, x_max))
     #         g.axes[i, j].set_ylim((x_min, x_max))
 
-    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}.png"))
+    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level*100)}.png"))
