@@ -46,9 +46,9 @@ def print_error(sorting):
 
     # select errors to plot
     fields = ["pressure", "flow"]
-    domain = ["cap", "int"]
-    metric0 = ["max", "avg"]  # , 'sys', 'dia'
-    metric1 = ["rel", "abs"]
+    domain = ["cap"] #, "int"
+    metric0 = ["max"]  #, "avg", "max" , "sys", "dia"
+    metric1 = ["rel"] # , "abs"
 
     # generate plots
     for d in domain:
@@ -69,6 +69,7 @@ def print_error(sorting):
                     dpi=300,
                     figsize=(12, 6),
                     sharex="col",
+                    sharey=m1 == "rel",
                     width_ratios=[20, 1],
                 )
                 plot_bar_arrow(
@@ -90,6 +91,8 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         "abs": "absolute",
         "cap": "caps",
         "int": "interior",
+        "sys": "systolic",
+        "dia": "diastolic"
     }
     categories = {
         "Animal and Misc": "Animal",
@@ -153,13 +156,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         ax[0].xaxis.grid("both")
         ax[0].set_xlim(xlim)
         ylabel = f.capitalize()
+        title = names[m0].capitalize() + " " + names[m1] + " " + f + " error at " + names[d]
         if m1 == "abs":
-            ylabel += " [" + units[f] + "]"
-        ax[0].set_ylabel(ylabel)
+            title += " [" + units[f] + "]"
+        ax[0].set_title(title)
         if j == 0:
-            ax[0].set_title(
-                names[m0].capitalize() + " " + names[m1] + " error at " + names[d]
-            )
             ax[0].tick_params(
                 axis="x", which="both", bottom=False, top=False, labelbottom=False
             )
@@ -192,11 +193,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
     print(fname)
-    plt.tight_layout(rect=(0, 0, 0.8, 1))
+    plt.tight_layout()#rect=(0, 0, 0.8, 1))
     fig1.savefig(fname, bbox_inches="tight")
     plt.close()
 
 
 if __name__ == "__main__":
-    for sorting in ["categories", "alphabetical"]:
+    for sorting in ["categories"]:#, "alphabetical"
         print_error(sorting)
