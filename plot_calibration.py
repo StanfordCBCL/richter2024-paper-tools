@@ -6,9 +6,15 @@ import json
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 
-from utils import f_out, f_geo_in, f_cali_0d_out, f_cali_3d_out, model_colors, get_geometries
+from utils import (
+    f_out,
+    f_geo_in,
+    f_cali_0d_out,
+    f_cali_3d_out,
+    models_special,
+    get_geometries,
+)
 
 # use LaTeX in text
 plt.rcParams.update(
@@ -17,7 +23,6 @@ plt.rcParams.update(
 
 
 def plot(dim):
-    print("\nComparing 0D-" + str(dim) + "D\n")
     if dim == 0:
         f_cali_out = f_cali_0d_out
     elif dim == 3:
@@ -31,14 +36,17 @@ def plot(dim):
     # compare 0D element values
     nx = 9
     ny = 8
-    colors = {"C": "b", "L": "g", "R": "r", "s": "k"}
-    elements = ["R_poiseuille", "stenosis_coefficient", "L", "C"]
 
-    fig = plt.figure(figsize=(ny * 2, nx * 2), dpi=300)
-    main_gs = GridSpec(nx, ny, figure=fig)
+    # set element properties
+    elements = ["R_poiseuille", "stenosis_coefficient", "L", "C"]
+    colors = {}
+    for i, e in enumerate(elements):
+        colors[e[0]] = plt.cm.Dark2(i)
+    elements_pos = [[-1, 0], [0, 0], [-1, -1], [0, -1]]
+
+    fig, ax = plt.subplots(nx, ny, figsize=(ny * 2, nx * 2), dpi=300)
     for j, (fname, cat) in enumerate(zip(files, cats)):
-        print(fname)
-        row, col = divmod(j, ny)
+        ab = np.unravel_index(j, (nx, ny))
 
         # read results
         with open(os.path.join(f_geo_in, fname + ".json")) as f:
@@ -46,55 +54,77 @@ def plot(dim):
         with open(os.path.join(f_cali_out, fname + ".json")) as f:
             opt = json.load(f)
 
-         # Create a 2x2 grid for each subplot
-        sub_gs = GridSpecFromSubplotSpec(2, 2, subplot_spec=main_gs[row, col], wspace=0, hspace=0)
-
+        # loop all 0D elements
         for j, ele in enumerate(elements):
-            ax = fig.add_subplot(sub_gs[j])
+            # collect elements from all vessels
             ref = []
             sol = []
-            col = []
             for i in range(len(inp["vessels"])):
                 rval = inp["vessels"][i]["zero_d_element_values"][ele]
                 sval = opt["vessels"][i]["zero_d_element_values"][ele]
                 ref += [rval]
                 sol += [sval]
-                col += [colors[ele[0]]]
-            if j == 0:
-                ax.set_title(fname, fontweight="bold", fontsize=12)
-            ax.scatter(ref, sol, s=20, c=col)
-            ax.set_xticklabels([])
-            ax.set_yticklabels([])
-            ax.spines["top"].set_visible(True)
-            ax.spines["right"].set_visible(True)
-            ax.tick_params(left=False, bottom=False, labelleft=False, labelbottom=False)
+            ref = np.array(ref)
+            sol = np.array(sol)
 
             # manually set limits
-            xlim = [np.min(ref), np.max(ref)]
-            ylim = [np.min(sol), np.max(sol)]
-            lim = [np.min([xlim[0], ylim[0]]), np.max([xlim[1], ylim[1]])]
+            xlim = [ref.min(), ref.max()]
+            ylim = [sol.min(), sol.max()]
+            lim = np.array([np.min([xlim[0], ylim[0]]), np.max([xlim[1], ylim[1]])])
 
             # add margin so all dots are fully within plot
             eps = 0.1
             delta = np.diff(lim) * eps
             lim[0] -= delta
             lim[1] += delta
-            ax.set_xlim(lim)
-            ax.set_ylim(lim)
+
+            # normalize parameter range
+            ref = (ref - lim.min()) / (lim.max() - lim.min())
+            sol = (sol - lim.min()) / (lim.max() - lim.min())
+
+            # put plot in the correct quadrant
+            offset = elements_pos[j]
+
+            ax[ab].scatter(ref + offset[0], sol + offset[1], s=20, color=colors[ele[0]])
+            ax[ab].set_xticklabels([])
+            ax[ab].set_yticklabels([])
+            ax[ab].spines["top"].set_visible(True)
+            ax[ab].spines["right"].set_visible(True)
+            ax[ab].tick_params(
+                left=False, bottom=False, labelleft=False, labelbottom=False
+            )
 
             # plot diagonal
-            ax.plot(lim, lim, "k--")
+            diag = np.array([0, 1])
+            ax[ab].plot(diag + offset[0], diag + offset[1], "k--")
 
-            ax.set_aspect("equal", adjustable="box")
-            plt.subplots_adjust(wspace=0, hspace=0)
+        # plot dividers
+        ax[ab].plot([-1, 1], [0, 0], "k-")
+        ax[ab].plot([0, 0], [-1, 1], "k-")
+
+        # ax[ab].set_aspect("equal", adjustable=None)
+
+        total_lim = [-1, 1]
+        ax[ab].set_xlim(total_lim)
+        ax[ab].set_ylim(total_lim)
+        if fname in models_special:
+            col = "r"
+        else:
+            col = "k"
+        ax[ab].set_title("$\\textbf{" + fname + "}$", fontsize=16, color=col)
+
+        plt.subplots_adjust(
+            left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.2, hspace=0.2
+        )
 
     xtext = "Geometric 0D elements"
     ytext = "Calibrated 0D elements from " + str(dim) + "D results"
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
     fig.text(-0.01, 0.5, ytext, va="center", fontsize=24, rotation="vertical")
-    plt.tight_layout(pad=0, w_pad=0, h_pad=0)
+    plt.tight_layout()
     fout = os.path.join(f_out, "calibration_" + str(dim) + "d.png")
     fig.savefig(fout, bbox_inches="tight")
+    print(fout)
     plt.close(fig)
 
 

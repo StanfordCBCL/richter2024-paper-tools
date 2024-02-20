@@ -10,9 +10,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import matplotlib.path as mpath
-from matplotlib.patches import FancyArrowPatch
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 plt.rcParams.update(
     {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
@@ -22,7 +19,7 @@ from utils import (
     f_out,
     f_e_0d3d_geo,
     f_e_0d3d_cali,
-    model_colors,
+    models_special,
     get_geometries,
 )
 
@@ -102,7 +99,6 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         "Coronary": "Coronary",
         "Pulmonary": "Pulmonary",
     }
-    models = ["0104_0001", "0140_2001", "0080_0001"]
 
     # create gap between categories
     unique_cats = np.unique(cats)
@@ -125,7 +121,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
             if j == 1:
                 ax[i].set_xticks(positions, labels, rotation="vertical")
                 for label in ax[0].get_xticklabels():
-                    if label.get_text() in models:
+                    if label.get_text() in models_special:
                         label.set_color("r")
             if m1 == "rel":
                 ax[i].set_yscale("log")
