@@ -47,11 +47,10 @@ def print_error(sorting):
     # select errors to plot
     fields = ["pressure", "flow"]
     domain = ["cap", "int"]
-    metric0 = ["avg", "max"]  # , 'sys', 'dia'
+    metric0 = ["max", "avg"]  # , 'sys', 'dia'
     metric1 = ["rel", "abs"]
 
     # generate plots
-    fig1, ax1 = plt.subplots(2, 1, dpi=300, figsize=(12, 6), sharex=True)
     for d in domain:
         for m0 in metric0:
             for m1 in metric1:
@@ -64,6 +63,14 @@ def print_error(sorting):
                             values[f][s] += [err[s][k][f][d][m0][m1]["all"]]
                         values[f][s] = np.array(values[f][s])
 
+                fig1, ax1 = plt.subplots(
+                    2,
+                    2,
+                    dpi=300,
+                    figsize=(12, 6),
+                    sharex="col",
+                    width_ratios=[20, 1],
+                )
                 plot_bar_arrow(
                     fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out, sorting
                 )
@@ -84,67 +91,112 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         "cap": "caps",
         "int": "interior",
     }
+    categories = {
+        "Animal and Misc": "Animal",
+        "Aorta": "Aorta",
+        "Aortofemoral": "Aortofemoral",
+        "Congenital Heart Disease": "CHD",
+        "Coronary": "Coronary",
+        "Pulmonary": "Pulmonary",
+    }
+    models = ["0104_0001", "0140_2001", "0080_0001"]
 
-    plt.cla()
-    xlim = [-1, len(labels)]
+    # create gap between categories
+    unique_cats = np.unique(cats)
+    xlim = [-1, len(labels) + unique_cats.size - 1]
+    offset = [0]
+    for i in range(1, len(cats)):
+        j0 = cats.tolist().index(cats[i - 1])
+        j1 = cats.tolist().index(cats[i])
+        offset += [offset[i - 1] + int(j0 != j1)]
+    positions = xtick + np.array(offset)
 
     for j, (f, ax) in enumerate(zip(fields, axes)):
-        ax.cla()
-        ax.spines["top"].set_visible(True)
-        ax.spines["right"].set_visible(True)
-
-        if m1 == "rel":
-            ax.set_yscale("log")
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=1))
-
-        # plot average
-        means = {}
-        for k in values[f].keys():
-            if m1 == "abs":
-                values[f][k] *= convert[f]
-            means[k] = np.mean(values[f][k])
-            ax.plot(xlim, [means[k]] * 2, color="0.5")
+        # general settings
+        for i in range(2):
+            ax[i].cla()
+            ax[i].spines["top"].set_visible(True)
+            ax[i].spines["right"].set_visible(True)
+            ax[i].yaxis.grid("both")
+            ax[i].yaxis.set_ticks_position("both")
+            if j == 1:
+                ax[i].set_xticks(positions, labels, rotation="vertical")
+                for label in ax[0].get_xticklabels():
+                    if label.get_text() in models:
+                        label.set_color("r")
+            if m1 == "rel":
+                ax[i].set_yscale("log")
+                ax[i].yaxis.set_major_formatter(
+                    mtick.PercentFormatter(xmax=1, decimals=1)
+                )
+            # else:
+            #     values[f]["geometric"] *= convert[f]
+            #     values[f]["calibrated"] *= convert[f]
 
         # plot geometries
         data = zip(values[f]["geometric"], values[f]["calibrated"], cats)
         for i, (val0, val1, cat) in enumerate(data):
+            pos = positions[i]
             if val0 > val1:
                 m = "v"
             else:
                 m = "^"
-            ax.plot([i], [val1], color=model_colors[cat], marker=m, markersize=4)
-            ax.plot([i, i], [val0, val1], color=model_colors[cat], linewidth=2)
+            if labels[i] in models:
+                col = "r"
+                width = 1.5
+            else:
+                col = "k"
+                width = 1
+            ax[0].plot([pos], [val1], color=col, marker=m, markersize=3)
+            ax[0].plot([pos, pos], [val0, val1], color=col, linewidth=width)
 
-        ax.set_xlim(xlim)
-        ax.xaxis.grid("both")
-        ax.yaxis.grid("both")
+        ax[0].xaxis.grid("both")
+        ax[0].set_xlim(xlim)
         ylabel = f.capitalize()
         if m1 == "abs":
             ylabel += " [" + units[f] + "]"
-        ax.set_ylabel(ylabel)
+        ax[0].set_ylabel(ylabel)
         if j == 0:
-            ax.set_title(
+            ax[0].set_title(
                 names[m0].capitalize() + " " + names[m1] + " error at " + names[d]
             )
-            ax.tick_params(
+            ax[0].tick_params(
                 axis="x", which="both", bottom=False, top=False, labelbottom=False
             )
-        if j == 1:
-            ax.set_xticks(xtick, labels, rotation="vertical")
+
+        # add model categories
+        if name == "categories" and j == 1:
+            for cat in unique_cats:
+                mid_point = np.mean(positions[cats == cat])
+                ax[0].annotate(
+                    categories[cat],
+                    xy=(mid_point, 0),
+                    xycoords=("data", "axes fraction"),
+                    xytext=(0, -45),
+                    textcoords="offset points",
+                    ha="center",
+                    va="top",
+                )
+
+        # plot box plots
+        ax[1].boxplot(
+            values[f]["geometric"], positions=[0], widths=0.6, labels=["Geometric"]
+        )
+        ax[1].boxplot(
+            values[f]["calibrated"], positions=[1], widths=0.6, labels=["Calibrated"]
+        )
+        ax[1].yaxis.tick_right()
 
     plt.subplots_adjust(hspace=0.05)
     fname = os.path.join(
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
-    ratio = means["geometric"] / means["calibrated"]
     print(fname)
-    for f in fields:
-        ratio = values[f]["geometric"] / values[f]["calibrated"]
-        print("error reduction ", f, np.mean(ratio))
     plt.tight_layout(rect=(0, 0, 0.8, 1))
     fig1.savefig(fname, bbox_inches="tight")
+    plt.close()
 
 
 if __name__ == "__main__":
-    for sorting in ["alphabetical", "categories"]:
+    for sorting in ["categories", "alphabetical"]:
         print_error(sorting)
