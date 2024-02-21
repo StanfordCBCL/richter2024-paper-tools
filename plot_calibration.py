@@ -44,7 +44,7 @@ def plot(dim):
         colors[e[0]] = plt.cm.Dark2(i)
     elements_pos = [[-1, 0], [0, 0], [-1, -1], [0, -1]]
 
-    fig, ax = plt.subplots(nx, ny, figsize=(ny * 2, nx * 2), dpi=300)
+    fig, ax = plt.subplots(nx, ny, figsize=(ny * 2, nx * 2.5), dpi=300)
     for j, (fname, cat) in enumerate(zip(files, cats)):
         ab = np.unravel_index(j, (nx, ny))
 
@@ -85,7 +85,7 @@ def plot(dim):
             # put plot in the correct quadrant
             offset = elements_pos[j]
 
-            ax[ab].scatter(ref + offset[0], sol + offset[1], s=20, color=colors[ele[0]])
+            ax[ab].scatter(ref + offset[0], sol + offset[1], s=50, color=colors[ele[0]])
             ax[ab].set_xticklabels([])
             ax[ab].set_yticklabels([])
             ax[ab].spines["top"].set_visible(True)
@@ -96,22 +96,24 @@ def plot(dim):
 
             # plot diagonal
             diag = np.array([0, 1])
-            ax[ab].plot(diag + offset[0], diag + offset[1], "k--")
+            ax[ab].plot(diag + offset[0], diag + offset[1], "k--", linewidth=1.5)
 
         # plot dividers
         ax[ab].plot([-1, 1], [0, 0], "k-")
         ax[ab].plot([0, 0], [-1, 1], "k-")
 
-        # ax[ab].set_aspect("equal", adjustable=None)
+        ax[ab].set_aspect("equal", adjustable="box")
 
         total_lim = [-1, 1]
         ax[ab].set_xlim(total_lim)
         ax[ab].set_ylim(total_lim)
         if fname in models_special:
             col = "r"
+            title = "$\\textbf{" + fname + "}$"
         else:
             col = "k"
-        ax[ab].set_title("$\\textbf{" + fname + "}$", fontsize=16, color=col)
+            title = fname
+        ax[ab].set_title(title, fontsize=21, color=col)
 
         plt.subplots_adjust(
             left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.2, hspace=0.2
