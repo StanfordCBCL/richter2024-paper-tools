@@ -124,8 +124,8 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
     cmap_m = "Reds"
     diff_p = diff >= 0
     diff_m = diff < 0
-    diff[diff_p] = (diff[diff_p]) / diff.max()
-    diff[diff_m] = 1 - (diff[diff_m]) / diff.min()
+    diff[diff_p] = 0.5 + (diff[diff_p]) / diff.max() / 2
+    diff[diff_m] = 1 - (diff[diff_m]) / diff.min() / 2
     colors = np.zeros(diff.shape + (4,))
     colors[diff_p] = plt.colormaps[cmap_p](diff[diff_p])
     colors[diff_m] = plt.colormaps[cmap_m](diff[diff_m])
