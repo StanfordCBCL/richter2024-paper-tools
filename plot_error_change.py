@@ -10,6 +10,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 
 plt.rcParams.update(
     {"text.usetex": True, "font.family": "serif", "font.serif": "Computer Modern Roman"}
@@ -67,7 +69,7 @@ def print_error(sorting):
                     figsize=(12, 6),
                     sharex="col",
                     sharey=m1 == "rel",
-                    width_ratios=[20, 1],
+                    width_ratios=[20, 1]
                 )
                 plot_bar_arrow(
                     fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out, sorting
@@ -102,13 +104,42 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
 
     # create gap between categories
     unique_cats = np.unique(cats)
-    xlim = [-1, len(labels) + unique_cats.size - 1]
     offset = [0]
+    skip = 0.5
     for i in range(1, len(cats)):
         j0 = cats.tolist().index(cats[i - 1])
         j1 = cats.tolist().index(cats[i])
-        offset += [offset[i - 1] + int(j0 != j1)]
+        offset += [offset[i - 1] + int(j0 != j1) * skip]
     positions = xtick + np.array(offset)
+    xlim = [-1, len(labels) + (unique_cats.size - 1) * skip]
+
+    # collect error change
+    diff_raw = []
+    for f in fields:
+        diff_raw += [np.log(values[f]["geometric"] / values[f]["calibrated"]) / np.log(10)]
+    diff = np.array(diff_raw)
+
+    # set colors according to error change
+    cmap_p = "Blues"
+    cmap_m = "Reds"
+    diff_p = diff >= 0
+    diff_m = diff < 0
+    diff[diff_p] = (diff[diff_p]) / diff.max()
+    diff[diff_m] = 1 - (diff[diff_m]) / diff.min()
+    colors = np.zeros(diff.shape + (4,))
+    colors[diff_p] = plt.colormaps[cmap_p](diff[diff_p])
+    colors[diff_m] = plt.colormaps[cmap_m](diff[diff_m])
+
+    # # Assuming 'diff' is your data range for the colorbar
+    # data_range = np.min(diff_raw), np.max(diff_raw)
+    # norm = Normalize(vmin=data_range[0], vmax=data_range[1])
+    # mappable = ScalarMappable(cmap=cmap_p)
+
+    # cbar_ax = fig1.add_axes([0.4, -0.06, 0.2, 0.02])  # Adjust the dimensions as needed
+    # cbar = fig1.colorbar(mappable, cax=cbar_ax, orientation='horizontal')
+
+    # # Set the colorbar's label
+    # cbar.set_label('Factor change in error from geometric to calibrated', fontsize=12)
 
     for j, (f, ax) in enumerate(zip(fields, axes)):
         # general settings
@@ -119,7 +150,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
             ax[i].yaxis.grid("both")
             ax[i].yaxis.set_ticks_position("both")
             if j == 1:
-                ax[i].set_xticks(positions, labels, rotation="vertical")
+                ax[i].set_xticks(positions, labels, rotation="vertical", fontsize=12)
                 for label in ax[0].get_xticklabels():
                     if label.get_text() in models_special:
                         label.set_color("r")
@@ -128,34 +159,25 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
                 ax[i].yaxis.set_major_formatter(
                     mtick.PercentFormatter(xmax=1, decimals=1)
                 )
+                ax[i].tick_params(axis='y', labelsize=12)
             # else:
             #     values[f]["geometric"] *= convert[f]
             #     values[f]["calibrated"] *= convert[f]
 
         # plot geometries
-        data = zip(values[f]["geometric"], values[f]["calibrated"], cats)
-        for i, (val0, val1, cat) in enumerate(data):
+        data = zip(values[f]["geometric"], values[f]["calibrated"], colors[j])
+        for i, (val0, val1, col) in enumerate(data):
             pos = positions[i]
-            if val0 > val1:
-                m = "v"
-            else:
-                m = "^"
-            if labels[i] in models:
-                col = "r"
-                width = 1.5
-            else:
-                col = "k"
-                width = 1
-            ax[0].plot([pos], [val1], color=col, marker=m, markersize=3)
-            ax[0].plot([pos, pos], [val0, val1], color=col, linewidth=width)
+            mar = "v" if val0 > val1 else "^"
+            ax[0].plot([pos], [val1], color=col, marker=mar, markersize=6)
+            ax[0].plot([pos, pos], [val0, val1], color=col, linewidth=2)
 
         ax[0].xaxis.grid("both")
         ax[0].set_xlim(xlim)
-        ylabel = f.capitalize()
         title = names[m0].capitalize() + " " + names[m1] + " " + f + " error at " + names[d]
         if m1 == "abs":
             title += " [" + units[f] + "]"
-        ax[0].set_title(title)
+        ax[0].set_title(title, fontsize=15)
         if j == 0:
             ax[0].tick_params(
                 axis="x", which="both", bottom=False, top=False, labelbottom=False
@@ -169,7 +191,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
                     categories[cat],
                     xy=(mid_point, 0),
                     xycoords=("data", "axes fraction"),
-                    xytext=(0, -45),
+                    xytext=(0, -60),
                     textcoords="offset points",
                     ha="center",
                     va="top",
@@ -185,12 +207,13 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         ax[1].yaxis.tick_right()
 
     plt.subplots_adjust(hspace=0.05)
+
     fname = os.path.join(
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
-    print(fname)
     plt.tight_layout()#rect=(0, 0, 0.8, 1))
     fig1.savefig(fname, bbox_inches="tight")
+    print(fname)
     plt.close()
 
 
