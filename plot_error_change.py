@@ -5,6 +5,8 @@ import os
 import json
 
 import numpy as np
+import seaborn as sns
+import pandas as pd
 import matplotlib
 
 matplotlib.use("Agg")
@@ -26,13 +28,47 @@ from utils import (
 )
 
 
+def add_median_labels(ax: plt.Axes) -> None:
+    """Add text labels to the median lines of a seaborn boxplot.
+    """
+    lines = ax.get_lines()
+    boxes = [c for c in ax.get_children() if "Patch" in str(c)]
+    lines_per_box = len(lines) // len(boxes)
+    i = 0
+    for median in lines[4::lines_per_box]:
+        x, y = (data.mean() for data in median.get_data())
+
+        # choose value depending on horizontal or vertical plot orientation
+        value = x if len(set(median.get_xdata())) == 1 else y
+
+        # workaround for LaTeX
+        f = "{:.1f}".format(value*100) + "\,\%"
+        if i == 0:
+            ha = "left"
+            dx = 0.3
+        else:
+            ha = "right"
+            dx = -0.4
+        x += 0.11 + dx
+        ax.text(
+            x,
+            y,
+            f,
+            ha=ha,
+            va="center",
+            color="black",
+            fontsize=9,
+        )
+        i += 1
+
+
 def print_error(sorting):
     # load post-processed error analysis
+    err = {}
     with open(f_e_0d3d_geo, "r") as f:
-        geometric = json.load(f)
+        err["geometric"] = json.load(f)
     with open(f_e_0d3d_cali, "r") as f:
-        calibrated = json.load(f)
-    err = {"geometric": geometric, "calibrated": calibrated}
+        err["optimized"] = json.load(f)
 
     # load model database
     geos, cats = get_geometries()
@@ -45,9 +81,9 @@ def print_error(sorting):
 
     # select errors to plot
     fields = ["pressure", "flow"]
-    domain = ["cap"] #, "int"
-    metric0 = ["max"]  #, "avg", "max" , "sys", "dia"
-    metric1 = ["rel"] # , "abs"
+    domain = ["cap"]  # , "int"
+    metric0 = ["max"]  # , "avg", "max" , "sys", "dia"
+    metric1 = ["rel"]  # , "abs"
 
     # generate plots
     for d in domain:
@@ -56,7 +92,7 @@ def print_error(sorting):
                 values = {}
                 for f in fields:
                     values[f] = {}
-                    for s in ["geometric", "calibrated"]:
+                    for s in ["geometric", "optimized"]:
                         values[f][s] = []
                         for k in geos:
                             values[f][s] += [err[s][k][f][d][m0][m1]["all"]]
@@ -69,7 +105,7 @@ def print_error(sorting):
                     figsize=(12, 6),
                     sharex="col",
                     sharey=m1 == "rel",
-                    width_ratios=[20, 1]
+                    width_ratios=[15, 1],
                 )
                 plot_bar_arrow(
                     fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out, sorting
@@ -91,7 +127,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         "cap": "caps",
         "int": "interior",
         "sys": "systolic",
-        "dia": "diastolic"
+        "dia": "diastolic",
     }
     categories = {
         "Animal and Misc": "Animal",
@@ -111,12 +147,14 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         j1 = cats.tolist().index(cats[i])
         offset += [offset[i - 1] + int(j0 != j1) * skip]
     positions = xtick + np.array(offset)
-    xlim = [-1, len(labels) + (unique_cats.size - 1) * skip]
+    xlim = [-skip, len(labels) + (unique_cats.size - 1) * skip - skip]
 
     # collect error change
     diff_raw = []
     for f in fields:
-        diff_raw += [np.log(values[f]["geometric"] / values[f]["calibrated"]) / np.log(10)]
+        diff_raw += [
+            np.log(values[f]["geometric"] / values[f]["optimized"]) / np.log(10)
+        ]
     diff = np.array(diff_raw)
 
     # set colors according to error change
@@ -124,8 +162,8 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
     cmap_m = "Reds"
     diff_p = diff >= 0
     diff_m = diff < 0
-    diff[diff_p] = 0.5 + (diff[diff_p]) / diff.max() / 2
-    diff[diff_m] = 1 - (diff[diff_m]) / diff.min() / 2
+    diff[diff_p] = 0.5 + (diff[diff_p]) / diff.max() / 2.5
+    diff[diff_m] = 0.5 + (diff[diff_m]) / diff.min() / 2.5
     colors = np.zeros(diff.shape + (4,))
     colors[diff_p] = plt.colormaps[cmap_p](diff[diff_p])
     colors[diff_m] = plt.colormaps[cmap_m](diff[diff_m])
@@ -139,7 +177,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
     # cbar = fig1.colorbar(mappable, cax=cbar_ax, orientation='horizontal')
 
     # # Set the colorbar's label
-    # cbar.set_label('Factor change in error from geometric to calibrated', fontsize=12)
+    # cbar.set_label('Factor change in error from geometric to optimized', fontsize=12)
 
     for j, (f, ax) in enumerate(zip(fields, axes)):
         # general settings
@@ -159,13 +197,13 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
                 ax[i].yaxis.set_major_formatter(
                     mtick.PercentFormatter(xmax=1, decimals=1)
                 )
-                ax[i].tick_params(axis='y', labelsize=12)
+                ax[i].tick_params(axis="y", labelsize=12)
             # else:
             #     values[f]["geometric"] *= convert[f]
-            #     values[f]["calibrated"] *= convert[f]
+            #     values[f]["optimized"] *= convert[f]
 
         # plot geometries
-        data = zip(values[f]["geometric"], values[f]["calibrated"], colors[j])
+        data = zip(values[f]["geometric"], values[f]["optimized"], colors[j])
         for i, (val0, val1, col) in enumerate(data):
             pos = positions[i]
             mar = "v" if val0 > val1 else "^"
@@ -174,7 +212,7 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
 
         ax[0].xaxis.grid("both")
         ax[0].set_xlim(xlim)
-        title = names[m0].capitalize() + " " + names[m1] + " " + f + " error at " + names[d]
+        title = "Change in " + names[m0] + " " + f + " error"
         if m1 == "abs":
             title += " [" + units[f] + "]"
         ax[0].set_title(title, fontsize=15)
@@ -198,25 +236,42 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
                 )
 
         # plot box plots
-        ax[1].boxplot(
-            values[f]["geometric"], positions=[0], widths=0.6, labels=["Geometric"]
+        df_geo = pd.DataFrame({f: values[f]["geometric"], "Model": "Geometric"})
+        df_opt = pd.DataFrame({f: values[f]["optimized"], "Model": "Optimized"})
+        df_box = pd.concat([df_geo, df_opt])
+        sns.boxplot(
+            x="Model",
+            y=f,
+            data=df_box,
+            hue="Model",
+            legend=False,
+            ax=ax[1],
+            palette="YlGn",
+            linewidth=1,
+            width=0.5,
+            fliersize=0,
+            saturation=1,
         )
-        ax[1].boxplot(
-            values[f]["calibrated"], positions=[1], widths=0.6, labels=["Calibrated"]
-        )
+        add_median_labels(ax[1])
+        ax[1].set_xlabel("")
+        ax[1].tick_params(axis="y", labelsize=12)
         ax[1].yaxis.tick_right()
+        ax[1].set_xlim([-0.5, 1.5])
+        ax[1].set_xticks(
+            [0, 1], ["Geometric", "Calibrated"], rotation="vertical", fontsize=12
+        )
 
     plt.subplots_adjust(hspace=0.05)
 
     fname = os.path.join(
         folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
     )
-    plt.tight_layout()#rect=(0, 0, 0.8, 1))
+    plt.tight_layout()  # rect=(0, 0, 0.8, 1))
     fig1.savefig(fname, bbox_inches="tight")
     print(fname)
     plt.close()
 
 
 if __name__ == "__main__":
-    for sorting in ["categories"]:#, "alphabetical"
+    for sorting in ["categories"]:  # , "alphabetical"
         print_error(sorting)
