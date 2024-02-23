@@ -2,10 +2,12 @@
 # coding=utf-8
 
 import pdb
+import scipy
 import json
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 from utils import (
     f_out,
@@ -45,6 +47,8 @@ def plot(dim):
     elements_pos = [[-1, 0], [0, 0], [-1, -1], [0, -1]]
 
     fig, ax = plt.subplots(nx, ny, figsize=(ny * 2, nx * 2.5), dpi=300)
+
+    correlations = defaultdict(list)
     for j, (fname, cat) in enumerate(zip(files, cats)):
         ab = np.unravel_index(j, (nx, ny))
 
@@ -66,6 +70,10 @@ def plot(dim):
                 sol += [sval]
             ref = np.array(ref)
             sol = np.array(sol)
+
+            # get some statistics
+            slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(ref, sol)
+            correlations[ele] += [r_value ** 2]
 
             # manually set limits
             xlim = [ref.min(), ref.max()]
@@ -119,6 +127,11 @@ def plot(dim):
             left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.2, hspace=0.2
         )
 
+    # print correlations
+    print(str(dim) + "D r_value (mean, std)")
+    for k, v in correlations.items():
+        print(k, np.mean(v), np.std(v))
+    
     xtext = "Geometric 0D elements"
     ytext = "Optimized 0D elements from " + str(dim) + "D results"
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
