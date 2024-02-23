@@ -120,11 +120,11 @@ def plot(dim):
         )
 
     xtext = "Geometric 0D elements"
-    ytext = "Calibrated 0D elements from " + str(dim) + "D results"
+    ytext = "Optimized 0D elements from " + str(dim) + "D results"
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
     fig.text(-0.01, 0.5, ytext, va="center", fontsize=24, rotation="vertical")
     plt.tight_layout()
-    fout = os.path.join(f_out, "calibration_" + str(dim) + "d.png")
+    fout = os.path.join(f_out, "optimized_" + str(dim) + "d.png")
     fig.savefig(fout, bbox_inches="tight")
     print(fout)
     plt.close(fig)
