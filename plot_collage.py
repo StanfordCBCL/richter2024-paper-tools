@@ -28,7 +28,7 @@ def plot_collage():
             impath = os.path.join(f_picture, geo + '.png')
             im = plt.imread(impath)
             ax[i, j].imshow(im)
-            ax[i, j].set_title("$\\bf{"+geo.replace("_", "\_") + "}$", fontsize=18)
+            ax[i, j].set_title(geo.replace("_", "\_"), fontsize=18)
             #, fontweight="bold", color=model_colors[cat]
             ig += 1
     fpath = os.path.join(f_out, "collage.png")  # .pgf
