@@ -130,13 +130,16 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
         "dia": "diastolic",
     }
     categories = {
-        "Animal and Misc": "Animal",
+        "Animal and Misc": "Aorta",
         "Aorta": "Aorta",
         "Aortofemoral": "Aortofemoral",
-        "Congenital Heart Disease": "CHD",
+        "Congenital Heart Disease": "Pulmonary",
         "Coronary": "Coronary",
         "Pulmonary": "Pulmonary",
     }
+
+    # combine some categories
+    cats = np.array([categories[c] for c in cats])
 
     # create gap between categories
     unique_cats = np.unique(cats)
