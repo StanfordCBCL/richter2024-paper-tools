@@ -168,17 +168,6 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
     colors[diff_p] = plt.colormaps[cmap_p](diff[diff_p])
     colors[diff_m] = plt.colormaps[cmap_m](diff[diff_m])
 
-    # # Assuming 'diff' is your data range for the colorbar
-    # data_range = np.min(diff_raw), np.max(diff_raw)
-    # norm = Normalize(vmin=data_range[0], vmax=data_range[1])
-    # mappable = ScalarMappable(cmap=cmap_p)
-
-    # cbar_ax = fig1.add_axes([0.4, -0.06, 0.2, 0.02])  # Adjust the dimensions as needed
-    # cbar = fig1.colorbar(mappable, cax=cbar_ax, orientation='horizontal')
-
-    # # Set the colorbar's label
-    # cbar.set_label('Factor change in error from geometric to optimized', fontsize=12)
-
     for j, (f, ax) in enumerate(zip(fields, axes)):
         # general settings
         for i in range(2):
@@ -188,10 +177,11 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
             ax[i].yaxis.grid("both")
             ax[i].yaxis.set_ticks_position("both")
             if j == 1:
-                ax[i].set_xticks(positions, labels, rotation="vertical", fontsize=12)
-                for label in ax[0].get_xticklabels():
-                    if label.get_text() in models_special:
-                        label.set_color("r")
+                labels = np.array(labels, dtype=object)
+                for k in range(len(labels)):
+                    if labels[k] in models_special:
+                        labels[k] = "$\\Rightarrow$ " + labels[k]
+                ax[i].set_xticks(positions, labels, rotation="vertical", fontsize=12, va="top")
             if m1 == "rel":
                 ax[i].set_yscale("log")
                 ax[i].yaxis.set_major_formatter(
