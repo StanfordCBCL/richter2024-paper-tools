@@ -74,7 +74,7 @@ def plot(dim):
         colors[e[0]] = plt.cm.Dark2(i)
     elements_pos = np.array([[-2, 0], [-1, 0], [0, 0], [1, 0]])
 
-    fig, ax = plt.subplots(nv, nh, figsize=(nh * 3, nv), dpi=500)
+    fig, ax = plt.subplots(nv, nh, figsize=(nh * 3.5, nv), dpi=500)
 
     correlations = defaultdict(list)
     for j, (fname, cat) in enumerate(zip(files, cats)):
