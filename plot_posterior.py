@@ -47,6 +47,8 @@ for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january202
     gt = np.array(data["metrics"]["ground_truth"])
     # map = np.array(data["metrics"]["maximum_a_posteriori"])
 
+    theta_obs = [9.671050954310326, 8.137103389639302, 9.808957068689894, 10.818837842333226, 9.808957068689894]
+
     weights = np.array(taskdata["weights"][-1]).flatten()
     particles = np.array(taskdata["particles"][-1])
     
@@ -74,11 +76,22 @@ for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january202
     cmap = matplotlib.colormaps[colormap_name]
 
     g = sns.PairGrid(data)
-    g.figure.set_size_inches(width*2/3,width*2/3)
+    g.figure.set_size_inches(width*1.5/3,width*1.5/3)
     # plt.title(r"$f_{\sigma}=" + f"{int(noise_level*100)}$")
-    g.map_upper(sns.scatterplot, hue=weights, linewidth=0)
+    g.map_upper(sns.scatterplot, hue=weights, linewidth=0, size=0.1)
     g.map_lower(sns.kdeplot, weights=weights, fill=True)
     g.map_diag(sns.kdeplot, weights=weights, fill=True, linewidth=1)
+
+    for i in range(5):
+        for j in range(5):
+            if j!=i:
+                g.axes[i,j].axhline(y=theta_obs[i], color="k", linewidth=0.4, alpha=0.5)
+                g.axes[i,j].axvline(x=theta_obs[j], color="k", linewidth=0.4, alpha=0.5)
+                # g.axes[i,j].scatter([theta_obs[j]], [theta_obs[i]], c="r", marker="x", alpha=1.0, s=2.0)
+            g.axes[i,j].spines["top"].set_visible(True)
+            g.axes[i,j].spines["right"].set_visible(True)
+            g.axes[i,j].set_xticks([8,10,12], [8,10,12])
+            g.axes[i,j].set_yticks([8,10,12], [8,10,12])
 
     # ---- Adjusting Axis Ranges ----
     global_xmin = 7
@@ -99,5 +112,7 @@ for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january202
     #             continue
     #         g.axes[i, j].set_xlim((x_min, x_max))
     #         g.axes[i, j].set_ylim((x_min, x_max))
+
+    plt.suptitle(f"$f_\sigma= {noise_level*100:.0f} \%$", y=1.06)
 
     g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level*100)}.png"))
