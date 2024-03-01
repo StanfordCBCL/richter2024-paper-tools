@@ -47,6 +47,9 @@ model_colors = {
     "Congenital Heart Disease": "orange",
 }
 
+# highighted models
+models_special = ["0104_0001", "0140_2001", "0080_0001"]
+
 def get_geometries():
     # get geometries
     geos = np.loadtxt(f_geometries, dtype="str")

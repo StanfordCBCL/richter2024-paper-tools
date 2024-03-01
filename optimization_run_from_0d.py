@@ -4,6 +4,7 @@
 import json
 import os
 import copy
+import time
 import numpy as np
 from scipy.interpolate import CubicSpline
 
@@ -71,11 +72,11 @@ def collect_results_from_0d(inp, res):
     return out, np.linspace(0, np.max(res["time"]), len(flow)).tolist(), flow
 
 
-def compare(geo):
+def compare(geo, times):
     print("\n", geo, "\n\n")
 
     # run the estimation
-    inp0, cali = estimate(geo)
+    inp0, cali = estimate(geo, times)
 
     # compare 0D element values
     for i in range(len(inp0["vessels"])):
@@ -97,10 +98,10 @@ def compare(geo):
             for j in [ref, sol]:
                 out += "\t\t{:.1e}".format(j)
             out += "\t\t{:+d}".format(int(np.log(err)))
-            print(out)
+            # print(out)
 
 
-def estimate(geo):
+def estimate(geo, times):
     # read input file
     with open(os.path.join(f_geo_in, geo + ".json")) as f:
         inp = json.load(f)
@@ -108,19 +109,21 @@ def estimate(geo):
 
     # run forward simulation
     try:
+        start_time = time.time()
         res = pysvzerod.simulate(inp)
+        times["simulate"] += [time.time() - start_time]
     except RuntimeError as e:
         print("Simulation failed: ", e)
         return
 
     # collect results in format required for calibrator
-    out, time, flow = collect_results_from_0d(inp, res)
+    out, bc_time, bc_flow = collect_results_from_0d(inp, res)
 
     # replace inflow to match calibration data
     for bc in inp["boundary_conditions"]:
         if bc["bc_name"] == "INFLOW":
-            bc["bc_values"]["t"] = time
-            bc["bc_values"]["Q"] = flow
+            bc["bc_values"]["t"] = bc_time
+            bc["bc_values"]["Q"] = bc_flow
 
     # set all elements to zero
     for vessel in inp["vessels"]:
@@ -148,7 +151,9 @@ def estimate(geo):
     with open(fname_in) as ff:
         config = json.load(ff)
     try:
+        start_time = time.time()
         cali = pysvzerod.calibrate(config)
+        times["calibrate"] += [time.time() - start_time]
     except RuntimeError as e:
         print("Calibration failed: ", e)
         return
@@ -164,5 +169,10 @@ def estimate(geo):
 if __name__ == "__main__":
     # loop over all vmr models
     files = np.loadtxt(f_geometries, dtype="str")
+    times = {"simulate": [], "calibrate": []}
     for f in files:
-        compare(f)
+        compare(f, times)
+
+    # report runtimes
+    for k, v in times.items():
+        print(k, np.sum(v), np.mean(v), np.std(v))
