@@ -134,8 +134,8 @@ def estimate(geo, times):
     # add calibration parameters
     inp["calibration_parameters"] = {
         "tolerance_gradient": 1e-5,
-        "tolerance_increment": 1e-9,
-        "maximum_iterations": 20,
+        "tolerance_increment": 1e-10,
+        "maximum_iterations": 100,
         "calibrate_stenosis_coefficient": True,
         "set_capacitance_to_zero": False,
     }
