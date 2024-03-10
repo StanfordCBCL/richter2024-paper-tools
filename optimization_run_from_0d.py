@@ -118,6 +118,7 @@ def estimate(geo, times):
 
     # collect results in format required for calibrator
     out, bc_time, bc_flow = collect_results_from_0d(inp, res)
+    times["size"] += [len(out["y"])]
 
     # replace inflow to match calibration data
     for bc in inp["boundary_conditions"]:
@@ -169,10 +170,10 @@ def estimate(geo, times):
 if __name__ == "__main__":
     # loop over all vmr models
     files = np.loadtxt(f_geometries, dtype="str")
-    times = {"simulate": [], "calibrate": []}
+    times = {"simulate": [], "calibrate": [], "size": []}
     for f in files:
         compare(f, times)
 
     # report runtimes
     for k, v in times.items():
-        print(k, np.sum(v), np.mean(v), np.std(v))
+        print(k, np.sum(v), np.mean(v), np.std(v), np.min(v), np.max(v))
