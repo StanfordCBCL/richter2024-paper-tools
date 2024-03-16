@@ -192,12 +192,12 @@ def add_median_labels(ax: plt.Axes, fmt: str = ".1f") -> None:
             text = ax.text(x+0.1, y, f'{value:{fmt}}', ha='left', va='center',
                         #    fontweight='bold',
                         color='black',
-                        fontsize=5)
+                        fontsize=7)
         else:
             text = ax.text(x-0.11, y, f'{value:{fmt}}', ha='right', va='center',
                         #    fontweight='bold',
                         color='black',
-                        fontsize=5)
+                        fontsize=7)
         i +=1
         # create median-colored border around white text for contrast
         # text.set_path_effects([
@@ -321,7 +321,7 @@ def main():
 
     df = pd.read_csv(df_target)
 
-    fig, axs = plt.subplots(1, 2, figsize=[width, width*0.55], sharey=True)
+    fig, axs = plt.subplots(1, 2, figsize=[width, width*0.65], sharey=True)
 
     sns.boxplot(df, x="Model", y="Mean systolic pressure error at caps [\%]", hue="Calibrated", ax=axs[0], palette="Greens", linewidth=0.5, width=.5, fliersize=0, saturation=1)
 
@@ -331,26 +331,35 @@ def main():
 
     add_median_labels(axs[1])
 
-    axs[0].set_title("Pressure")
-    axs[0].set_ylim([0, 20])
-    axs[1].set_title("Flow")
-    axs[1].set_ylim([0, 20])
+    axs[0].set_title("Pressure", y=1.02)
+    axs[0].set_ylim([0, 17.5])
+    axs[1].set_title("Flow", y=1.02)
+    axs[1].set_ylim([0, 17.5])
     axs[0].set_ylabel("Mean systolic error at caps [\%]")
     axs[0].grid(axis='y')
     axs[1].grid(axis='y')
+    axs[0].set_xlabel("")
+    axs[1].set_xlabel("")
 
     axs[0].spines["top"].set_visible(True)
     axs[0].spines["right"].set_visible(True)
     axs[1].spines["top"].set_visible(True)
     axs[1].spines["right"].set_visible(True)
 
-    axs[0].legend(loc='upper right', bbox_to_anchor=(1.9, -0.15), ncol=3)
+    axs[0].legend(loc='upper right', bbox_to_anchor=(1.93, -0.29), ncol=3)
     axs[1].get_legend().remove()
 
+    opt_0d_name = r"$\mathfrak{M}_\text{0D}(\boldsymbol{\theta}_\text{VMR}, \hat{\boldsymbol{\alpha}})$"
+    geo_0d_name = r"$\mathfrak{M}_\text{0D}(\boldsymbol{\theta}_\text{VMR}, \boldsymbol{\alpha}_\text{b})$"
+
+    new_labels = [f"{geo_0d_name}\nN=50", f"{opt_0d_name} (training)\nN=50", f"{opt_0d_name} (validation)\nN=49x50"]
+    for t, l in zip(axs[0].get_legend().texts, new_labels):
+        t.set_text(l)
+
     locations = [
-        [0.098,0.78,0.05,0.11],
-        [0.24,0.78,0.05,0.11],
-        [0.39,0.78,0.05,0.11],
+        [0.11,0.11,0.05,0.11],
+        [0.26,0.11,0.05,0.11],
+        [0.415,0.11,0.05,0.11],
     ]
     for i, model in enumerate(["0104_0001", "0140_2001", "0080_0001"]):
 
@@ -360,7 +369,7 @@ def main():
         newax.imshow(img)
         newax.axis('off')
     for loc in locations:
-        loc[0] += 0.5
+        loc[0] += 0.465
     for i, model in enumerate(["0104_0001", "0140_2001", "0080_0001"]):
 
         model_img = f"/Users/jakobrichter/code/paper-tools/data/pictures/{model}.png"
@@ -369,7 +378,7 @@ def main():
         newax.imshow(img)
         newax.axis('off')
 
-    fig.subplots_adjust(bottom=0.19, left=0.08, right=0.99, top=0.9)
+    fig.subplots_adjust(bottom=0.28, left=0.08, right=0.98, top=0.9, wspace=0.07)
 
     # fig.tight_layout()
     fig.savefig(os.path.join(target_folder, "errors.png"))
