@@ -1,25 +1,24 @@
 import json
-import os
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import style, rcParams
 import multiprocessing
+import os
+import shutil
 from tempfile import TemporaryDirectory
-import seaborn as sns
 
+import matplotlib
+import matplotlib.patheffects as path_effects
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pysvzerod
+import seaborn as sns
+from matplotlib import rcParams, style
 from rich import box, print
 from rich.table import Table
 from scipy.stats import pearsonr
+from svsuperestimator.main import run_from_config
 from svsuperestimator.reader import *
 from svsuperestimator.reader import utils as readutils
 from svsuperestimator.tasks import taskutils
-import pysvzerod
-from svsuperestimator.main import run_from_config
-import shutil
-
-import matplotlib.patheffects as path_effects
 
 import utils
 
@@ -346,13 +345,13 @@ def main():
     axs[1].spines["top"].set_visible(True)
     axs[1].spines["right"].set_visible(True)
 
-    axs[0].legend(loc='upper right', bbox_to_anchor=(1.93, -0.29), ncol=3)
+    axs[0].legend(loc='upper right', bbox_to_anchor=(1.8, -0.29), ncol=3)
     axs[1].get_legend().remove()
 
     opt_0d_name = r"$\mathfrak{M}_\text{0D}(\boldsymbol{\theta}_\text{VMR}, \hat{\boldsymbol{\alpha}})$"
     geo_0d_name = r"$\mathfrak{M}_\text{0D}(\boldsymbol{\theta}_\text{VMR}, \boldsymbol{\alpha}_\text{b})$"
 
-    new_labels = [f"{geo_0d_name}\nN=50", f"{opt_0d_name} (training)\nN=50", f"{opt_0d_name} (validation)\nN=49x50"]
+    new_labels = [f"Geometric\n{geo_0d_name}\nN=50", f"Optimized (training)\n{opt_0d_name}\nN=50", f"Optimized (validation)\n{opt_0d_name}\nN=49x50"]
     for t, l in zip(axs[0].get_legend().texts, new_labels):
         t.set_text(l)
 
@@ -381,7 +380,9 @@ def main():
     fig.subplots_adjust(bottom=0.28, left=0.08, right=0.98, top=0.9, wspace=0.07)
 
     # fig.tight_layout()
-    fig.savefig(os.path.join(target_folder, "errors.png"))
+    fig.savefig(os.path.join(target_folder, "cross_validation.png"))
+    fig.savefig(os.path.join(target_folder, "cross_validation.pdf"))
+    fig.savefig(os.path.join(target_folder, "cross_validation.svg"))
 
 
 if __name__ == "__main__":

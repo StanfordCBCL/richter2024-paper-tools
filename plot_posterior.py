@@ -25,7 +25,7 @@ target_folder = "/Volumes/richter/final_data/posterior_plots"
 os.makedirs(target_folder, exist_ok=True)
 
 
-for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january2024_0104_0001", "multi_fidelity_february_2024_more_noise", "multi_fidelity_february2024_even_more_noise"]):
+for noise_level, tuning_name in zip([100, 11.1, 4], ["multi_fidelity_january2024_0104_0001", "multi_fidelity_february_2024_more_noise", "multi_fidelity_february2024_even_more_noise"]):
 
     model_name = "0104_0001"
 
@@ -79,8 +79,8 @@ for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january202
     g.figure.set_size_inches(width*1.5/3,width*1.5/3)
     # plt.title(r"$f_{\sigma}=" + f"{int(noise_level*100)}$")
     g.map_upper(sns.scatterplot, hue=weights, linewidth=0, size=0.1)
-    g.map_lower(sns.kdeplot, weights=weights, fill=True)
-    g.map_diag(sns.kdeplot, weights=weights, fill=True, linewidth=1)
+    g.map_lower(sns.kdeplot, weights=weights, fill=True, bw_adjust=2.0)
+    g.map_diag(sns.kdeplot, weights=weights, fill=True, linewidth=1, bw_adjust=2.0)
 
     for i in range(5):
         for j in range(5):
@@ -113,6 +113,6 @@ for noise_level, tuning_name in zip([0.1, 0.3, 0.5], ["multi_fidelity_january202
     #         g.axes[i, j].set_xlim((x_min, x_max))
     #         g.axes[i, j].set_ylim((x_min, x_max))
 
-    plt.suptitle(f"$f_\sigma= {noise_level*100:.0f} \%$", y=1.06)
+    plt.suptitle(f"$\\text{{SNR}}={noise_level}$", y=1.06)
 
-    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level*100)}.png"))
+    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level)}.png"))
