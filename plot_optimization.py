@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 from utils import (
-    f_out,
+    f_out_png,
+    f_out_svg,
+    f_out_pdf,
     f_picture,
     f_geo_in,
     f_cali_0d_out,
@@ -160,9 +162,12 @@ def plot(dim):
     fig.text(0.5, -0.01, xtext, ha="center", fontsize=24)
     fig.text(-0.02, 0.5, ytext, va="center", fontsize=24, rotation="vertical")
     plt.tight_layout()
-    fout = os.path.join(f_out, "optimized_" + str(dim) + "d.png")
-    fig.savefig(fout, bbox_inches="tight")
-    print(fout)
+    fout1 = os.path.join(f_out_png, "optimized_" + str(dim) + "d.png")
+    fout2 = os.path.join(f_out_svg, "optimized_" + str(dim) + "d.svg")
+    fout3 = os.path.join(f_out_pdf, "optimized_" + str(dim) + "d.pdf")
+    for fout in [fout1, fout2, fout3]:
+        fig.savefig(fout, bbox_inches="tight")
+        print(fout)
     plt.close(fig)
 
 

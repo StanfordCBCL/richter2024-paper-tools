@@ -9,7 +9,9 @@ from collections import defaultdict
 FDIR = os.path.dirname(__file__)
 
 # output path for all png's
-f_out = os.path.join(FDIR, "png")
+f_out_png = os.path.join(FDIR, "png")
+f_out_svg = os.path.join(FDIR, "svg")
+f_out_pdf = os.path.join(FDIR, "pdf")
 
 # list of geometries used in pfaller22 and richter24
 f_geometries = os.path.join(FDIR, "geometries_vmr_pfaller22.txt")

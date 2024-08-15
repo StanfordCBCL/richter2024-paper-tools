@@ -116,3 +116,5 @@ for noise_level, tuning_name in zip([100, 11.1, 4], ["multi_fidelity_january2024
     plt.suptitle(f"$\\text{{SNR}}={noise_level}$", y=1.06)
 
     g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level)}.png"))
+    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level)}.svg"))
+    g.savefig(os.path.join(target_folder, "plots", f"posterior_{model_name}_{int(noise_level)}.pdf"))

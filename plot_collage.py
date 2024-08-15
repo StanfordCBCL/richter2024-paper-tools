@@ -5,7 +5,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import f_out, f_picture, model_colors, get_geometries
+from utils import f_out_png, f_out_svg, f_out_pdf, f_picture, model_colors, get_geometries
 
 def plot_collage():
     # get geometries and colors
@@ -31,9 +31,12 @@ def plot_collage():
             ax[i, j].set_title(geo.replace("_", "\_"), fontsize=18)
             #, fontweight="bold", color=model_colors[cat]
             ig += 1
-    fpath = os.path.join(f_out, "collage.png")  # .pgf
+    fpath1 = os.path.join(f_out_png, "collage.png")  # .pgf
+    fpath2 = os.path.join(f_out_svg, "collage.svg")
+    fpath3 = os.path.join(f_out_pdf, "collage.pdf")
     # fig.tight_layout(pad=3.0)
-    fig.savefig(fpath, bbox_inches="tight")
+    for fpath in [fpath1, fpath2, fpath3]:
+        fig.savefig(fpath, bbox_inches="tight")
     plt.close(fig)
 
 

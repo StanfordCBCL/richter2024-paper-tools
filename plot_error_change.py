@@ -20,7 +20,9 @@ plt.rcParams.update(
 )
 
 from utils import (
-    f_out,
+    f_out_png,
+    f_out_svg,
+    f_out_pdf,
     f_e_0d3d_geo,
     f_e_0d3d_cali,
     models_special,
@@ -108,11 +110,11 @@ def print_error(sorting):
                     width_ratios=[15, 1],
                 )
                 plot_bar_arrow(
-                    fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out, sorting
+                    fig1, ax1, xtick, values, geos, cats, m0, m1, f, d, f_out_png, f_out_svg, f_out_pdf, sorting
                 )
 
 
-def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder, name):
+def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder_png, folder_svg, folder_pdf, name):
     # unit conversion
     fields = ["pressure", "flow"]
     units = {"pressure": "mmHg", "flow": "l/min", "area": "mm$^2$"}
@@ -256,12 +258,19 @@ def plot_bar_arrow(fig1, axes, xtick, values, labels, cats, m0, m1, f, d, folder
 
     plt.subplots_adjust(hspace=0.05)
 
-    fname = os.path.join(
-        folder, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
+    fname1 = os.path.join(
+        folder_png, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".png"
+    )
+    fname2 = os.path.join(
+        folder_svg, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".svg"
+    )
+    fname3 = os.path.join(
+        folder_pdf, "error_arrow_" + name + "_" + d + "_" + m0 + "_" + m1 + ".pdf"
     )
     plt.tight_layout()  # rect=(0, 0, 0.8, 1))
-    fig1.savefig(fname, bbox_inches="tight")
-    print(fname)
+    for fname in [fname1, fname2, fname3]:
+        fig1.savefig(fname, bbox_inches="tight")
+        print(fname)
     plt.close()
 
 
